@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="card">
+    <div class="card-body">
+        <div class="row justify-content-between">
+            <div class="col-md-4">
+                <div class="mt-3 mt-md-0">
+                    <button type="button" class="btn btn-success waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#custom-modal"><i class="mdi mdi-plus-circle me-1"></i> Add Profile</button>
+                </div>
+            </div><!-- end col-->
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="custom-modal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h4 class="modal-title" id="myCenterModalLabel">Add Profile</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-hidden="true"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-light waves-effect waves-light">Save</button>
+                    <button type="button" class="btn btn-danger waves-effect waves-light" data-bs-dismiss="modal">Cancel</button>
+                </form>
+            </div>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+<div class="row">
+    {% for profile in profiles %}
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="text-center card-body">
+                <div>
+                    <img src="{{ profile.profile_picture.url }}" class="rounded-circle avatar-xl img-thumbnail mb-2" alt="profile-image">
+                    <div class="text-start">
+                        <p class="text-muted font-13"><strong>Full Name :</strong> <span class="ms-2">{{ profile.name }}</span></p>
+                        <p class="text-muted font-13"><strong>Emp ID :</strong> <span class="ms-2">{{ profile.emp_id }}</span></p>
+                        <p class="text-muted font-13"><strong>Work Email :</strong> <span class="ms-2">{{ profile.email }}</span></p>
+                        <p class="text-muted font-13"><strong>Designation :</strong> <span class="ms-2">{{ profile.designation }}</span></p>
+                        <p class="text-muted font-13"><strong>Department :</strong> <span class="ms-2">{{ profile.department }}</span></p>
+                        <p class="text-muted font-13"><strong>Reporting To :</strong> <span class="ms-2">{{ profile.reporting_to }}</span></p>
+                        <p class="text-muted font-13"><strong>Mobile :</strong><span class="ms-2">{{ profile.mobile }}</span></p>
+                    </div>
+                    <a href="{% url 'edit_profile' profile.id %}" class="btn btn-primary">Edit</a>
+                </div>
+            </div>
+        </div>
+    </div> <!-- end col -->
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,139 @@
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reschedule Appointment</title>
+    <!-- Include Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container d-flex justify-content-center align-items-center min-vh-100">
+        <div class="card shadow-lg p-4" style="width: 100%; max-width: 500px; border-radius: 10px;">
+            <h1 class="text-center mb-4">Reschedule Appointment</h1>
+            <form method="post" id="rescheduleForm">
+                {% csrf_token %}
+                <div class="mb-3">
+                    {{ form.as_p }}
+                </div>
+                <div class="d-flex justify-content-between">
+                    <button type="submit" class="btn btn-primary w-100 me-2">Reschedule</button>
+                    <a href="{% url 'schedule_meets' %}" class="btn btn-secondary w-100 ms-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Include Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const dateInput = document.getElementById("id_appointment_date"); // Ensure this ID matches your form field
+            const timeInput = document.getElementById("id_appointment_time"); // Ensure this ID matches your form field
+    
+            function setDateRestrictions() {
+                let today = new Date();
+                let maxDate = new Date();
+                maxDate.setDate(today.getDate() + 10); // Allow up to 10 days in the future
+    
+                // Format YYYY-MM-DD for HTML date input
+                let todayStr = today.toISOString().split("T")[0];
+                let maxDateStr = maxDate.toISOString().split("T")[0];
+    
+                dateInput.setAttribute("min", todayStr);
+                dateInput.setAttribute("max", maxDateStr);
+            }
+    
+            function setTimeRestrictions() {
+                let selectedDate = new Date(dateInput.value);
+                let now = new Date();
+    
+                // Set default min and max times (9:00 AM to 6:00 PM)
+                let minTime = "09:00";
+                let maxTime = "18:00";
+    
+                // If selected date is today, restrict past time selection
+                if (selectedDate.toDateString() === now.toDateString()) {
+                    let currentHours = now.getHours();
+                    let currentMinutes = now.getMinutes();
+    
+                    // Format the current time in HH:MM format
+                    let formattedNow = `${String(currentHours).padStart(2, '0')}:${String(currentMinutes).padStart(2, '0')}`;
+    
+                    // Ensure the user can't pick a past time today
+                    minTime = formattedNow > "09:00" ? formattedNow : "09:00";
+                }
+    
+                // Apply restrictions to time input
+                timeInput.setAttribute("min", minTime);
+                timeInput.setAttribute("max", maxTime);
+            }
+    
+            // Set date restrictions on page load
+            setDateRestrictions();
+    
+            // Update time restrictions when the user selects a date
+            dateInput.addEventListener("change", setTimeRestrictions);
+    
+            // Ensure time restrictions update in real time
+            setInterval(setTimeRestrictions, 1000); // Update every second in case time passes
+    
+            // Form submission handling
+            document.getElementById('rescheduleForm').addEventListener('submit', function(event) {
+                event.preventDefault(); // Prevent default form submission
+            
+                const form = event.target;
+                const formData = new FormData(form);
+            
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRFToken': formData.get('csrfmiddlewaretoken') // Include CSRF token
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Show pop-up for success
+                        Swal.fire({
+                            title: 'Success!',
+                            text: data.message,
+                            icon: 'success',
+                            confirmButtonText: 'OK'
+                        }).then(() => { // This ensures the redirect happens only after clicking "OK"
+                            if (data.redirect) {
+                                window.location.href = data.url; // Redirect after "OK"
+                            }
+                        });
+                    } else {
+                        // Handle errors
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message || 'An error occurred while rescheduling.',
+                            icon: 'error',
+                            confirmButtonText: 'OK'
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: 'Failed to reschedule the meeting.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+            });
+        });
+        </script>
+
+
+</body>
+</html>
+
